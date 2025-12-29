@@ -1,0 +1,52 @@
+# Virtual Environment
+/venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Environment variables (secrets!)
+.env
+*.env
+!.env.example
+
+# Data and storage (local only)
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter Notebooks (if you add them later)
+.ipynb_checkpoints/
+
+# Google Calendar credentials
+credentials.json
+token.json
+
+# Vector store data
+chroma_db/
+vector_store/
+
+# Telegram bot session files
+*.session

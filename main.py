@@ -5,7 +5,7 @@ from src.telegram_bot.bot import start_bot
 
 logging.basicConfig(
     level=Config.LOG_LEVEL,
-    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+    format="%(asctime)s - %(levelname)s - %(name)s:%(lineno)d - %(message)s"
 )
 logger = logging.getLogger(__name__)
 

@@ -1,6 +1,11 @@
 import logging
 from telegram import Update
 from telegram.ext import ContextTypes
+from langchain_core.messages import HumanMessage
+from src.agent.state import AgentState
+from src.agent.graph import get_agent_state_graph
+from src.utils.web_scraper import scrape_and_chunk
+from src.services.rag import get_rag_service
 
 logger = logging.getLogger(__name__)
 
@@ -14,21 +19,65 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 Available commands:
 /start - Start the bot
 /help - Show this help message
+/ingest <URL> - Ingest content from the provided URL
 Just send me any message and I'll respond!
     """
     await update.message.reply_text(help_text)
 
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None: 
-    user = update.effective_user
-    user_message = update.message.text
-    logger.info(f"Received message from {user.id}: {user_message}")
-    response = f"You said: {user_message}"
-    
-    await update.message.reply_text(response)
-    
 async def handle_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text("Nice image! However, I can only process text messages at the moment.")
     
 async def handle_unknown(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text("Sorry, I didn't understand that command. Type /help to see available commands.")
         
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None: 
+    user = update.effective_user
+    user_message = update.message.text
+    logger.info(f"Received message from {user.id}: {user_message}")
+    
+    try: 
+        state = AgentState(
+            user_id=str(user.id),
+            messages=[HumanMessage(content=user_message)]
+        )
+        graph_state = await get_agent_state_graph()
+        result = await graph_state.ainvoke(
+            state,
+            config={"configurable": {"thread_id": str(user.id)}} 
+        )
+        
+        ai_response = result["messages"][-1].content
+        await update.message.reply_text(ai_response)
+    except Exception as e:
+        logger.error(f"Error processing message from {user.id}: {e}")
+        await update.message.reply_text("Sorry, something went wrong while processing your message.")    
+        
+async def ingest_url_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    user = update.effective_user
+    
+    if not context.args or len(context.args) == 0:
+        await update.message.reply_text("Please provide a URL to ingest. Usage: /ingest_url <URL>")
+        return
+    
+    url = context.args[0]
+    logger.info(f"User {user.id} requested URL ingestion: {url}")
+    
+    await update.message.reply_text(f"Starting ingestion of the URL: {url}")
+    
+    try: 
+        chunks, metadata = await scrape_and_chunk(url)
+        
+        rag_service = get_rag_service()
+        rag_service.add_documents(
+            chunks, 
+            metadata,
+            user_id=str(user.id)
+        )
+        
+        await update.message.reply_text(
+            f"Successfully ingested content from {url}."
+            f"You can now ask questions related to this content."
+        )
+    except Exception as e:
+        logger.error(f"Error ingesting URL for user {user.id}: {e}")
+        await update.message.reply_text("Sorry, there was an error ingesting the provided URL.")

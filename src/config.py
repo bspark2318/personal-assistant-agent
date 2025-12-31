@@ -7,8 +7,8 @@ load_dotenv(project_root / '.env')
 
 class Config:
     # LLM 
-    OPENAPI_API_KEY = os.getenv('OPENAPI_API_KEY', '')
-    OPENAPI_MODEL = os.getenv("OPENAPI_MODEL", "gpt-4o-mini")
+    OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
+    OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
     
     # Telegram Bot
     TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
@@ -20,6 +20,7 @@ class Config:
     # Paths 
     DATA_DIR = project_root / "data"
     VECTOR_STORE_DIR = DATA_DIR / "vector_store"
+    QDRANT_DB_PATH = DATA_DIR / "qdrant_db" 
     CHECKPOINTS_DIR = DATA_DIR / "checkpoints"
     
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
@@ -30,12 +31,13 @@ class Config:
     
     @classmethod 
     def validate(cls) -> None:
-        if not cls.OPENAPI_API_KEY:
-            raise ValueError("OPENAPI_API_KEY is not set in environment variables.")
+        if not cls.OPENAI_API_KEY:
+            raise ValueError("OPENAI_API_KEY is not set in environment variables.")
         if not cls.TELEGRAM_BOT_TOKEN:
             raise ValueError("TELEGRAM_BOT_TOKEN is not set in environment variables.")
         
 
         cls.DATA_DIR.mkdir(parents=True, exist_ok=True)
+        cls.QDRANT_DB_PATH.mkdir(parents=True, exist_ok=True)
         cls.VECTOR_STORE_DIR.mkdir(parents=True, exist_ok=True)
         cls.CHECKPOINTS_DIR.mkdir(parents=True, exist_ok=True) 
